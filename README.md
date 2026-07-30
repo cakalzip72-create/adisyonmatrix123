@@ -86,9 +86,31 @@ Demo modunda sağ üstteki kullanıcı menüsünden "rol değiştir" ile farklı
 
 Ürün ekleme modalında (`components/products/ProductFormModal.tsx`) gerçek fotoğraf yükleme zorunlu, sahte bir "güvenlik taraması" animasyonu ve kredi düşen bir "AI Görsel Oluştur" butonu bulunur. Bunlar **stub**'dır — gerçek bir görsel üretim / içerik güvenliği modeli bağlanmamıştır; ileride bu buton gerçek bir API çağrısıyla değiştirilebilir.
 
-## Derleme Çıktısı (`dist/`)
+## Derleme Çıktısı
 
-`next.config.ts` içinde `distDir: "dist"` ayarlıdır; `npm run build` çıktısı `.next` yerine `dist/` klasörüne yazılır. Uygulama Node.js sunucusu üzerinde çalışır (`npm start`, Vercel, Docker vb.).
+`npm run build` çıktısı `.next/` klasörüne yazılır. Uygulama bir Node.js sunucusu üzerinde çalışır (`npm start`, Netlify, Vercel, Docker vb.).
+
+> Kök dizindeki eski `dist/` klasörü, `distDir: "dist"` ayarının denendiği bir dönemden kalmadır ve artık kullanılmıyor. Güvenle silinebilir (`.gitignore`'da zaten var).
+
+### Netlify'a yayınlama
+
+**`dist/` (veya `.next/`) klasörünü Netlify'a sürükle-bırak ile yüklemeyin.** Bu klasör statik bir site değil, Next.js'in sunucu derleme çıktısıdır: kökünde `index.html` yoktur (`BUILD_ID`, `server/`, `static/`, `routes-manifest.json` içerir), bu yüzden Netlify her adreste **"Page not found"** döndürür. Ayrıca 27 rotanın 19'u `ƒ` (istek anında sunucuda render edilen) rotadır — statik dosya sunucusu bunları çalıştıramaz.
+
+Doğru yöntem, Netlify'ın derlemeyi kendisinin yapmasıdır. Kök dizindeki [`netlify.toml`](./netlify.toml) bunu ayarlar:
+
+1. Netlify → **Add new site → Import an existing project** ile bu Git deposunu bağlayın (sürükle-bırak değil).
+2. Build ayarları `netlify.toml`'dan okunur: komut `npm run build`, publish dizini `.next`, Node 22, `@netlify/plugin-nextjs` eklentisi. Eklentiyi Netlify otomatik kurar.
+3. **Site configuration → Environment variables** altına `.env.local.example` içindeki değişkenleri girin:
+   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, `NEXT_PUBLIC_SITE_URL` (Netlify adresiniz). `.env.local` dosyası depoya girmediği için bunlar girilmezse uygulama demo moduna düşer.
+4. Google ile giriş kullanılacaksa Supabase → Authentication → URL Configuration içindeki redirect URL listesine `https://<site>.netlify.app/auth/callback` adresini ekleyin.
+
+Git bağlamak yerine yerelden yayınlamak isterseniz, yine klasör yüklemesi değil Netlify CLI kullanın — derleme ve Function paketleme adımlarını o çalıştırır:
+
+```bash
+npx netlify deploy --build --prod
+```
+
+### Neden statik export değil?
 
 **Tam statik export (`output: "export"`) bu projede kullanılamaz.** Denendiğinde derleme şu hatayla durur:
 

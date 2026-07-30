@@ -1,0 +1,13 @@
+# AdisyonMatrix bir Next.js sunucu uygulamasıdır; statik klasör olarak
+# (dist/ sürükle-bırak) yayınlanamaz. Netlify'ın Next.js Runtime'ı derlemeyi
+# kendisi yapar ve dinamik rotaları Netlify Function'lara dönüştürür.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
