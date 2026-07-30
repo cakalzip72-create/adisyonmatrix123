@@ -8,6 +8,11 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # NEXT_PUBLIC_* degiskenleri tanimi geregi istemci paketine gomulur; bunlar
+  # gizli deger degildir. Netlify'in secrets scanning adimi aksi halde
+  # "secrets found in build output" diyerek derlemeyi durdurur.
+  # Gercek sirlar (SUPABASE_SERVICE_ROLE_KEY, GEMINI_API_KEY) taranmaya devam eder.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,NEXT_PUBLIC_SITE_URL"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
