@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,6 +23,14 @@ export function ImageAuthScreen() {
   const [loading, setLoading] = useState<"signup" | "login" | "google" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmNotice, setConfirmNotice] = useState(false);
+
+  // /auth/callback başarısız olduğunda sebebi query string ile buraya taşır.
+  // useSearchParams yerine window kullanılıyor: bu sayfa statik üretiliyor,
+  // useSearchParams ek bir Suspense sınırı gerektirirdi.
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get("auth_error");
+    if (reason) setError(reason);
+  }, []);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
