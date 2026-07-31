@@ -121,24 +121,25 @@ export default function CustomerMenuPage({ params }: { params: Promise<{ storeSl
         const supabase = createClient();
         const discount = 0;
         const tax = Math.round(subtotal * 0.1);
-        const { data: order, error } = await supabase
-          .from("orders")
-          .insert({
-            store_id: store.id,
-            table_id: table.id,
-            status: "pending",
-            subtotal,
-            discount,
-            tax,
-            total_amount: subtotal + tax,
-          })
-          .select()
-          .single();
+        // id'yi istemcide üretiyoruz: misafir müşterinin orders üzerinde okuma
+        // izni yok (orders_members_all üyelik ister), bu yüzden insert sonrası
+        // .select() ile satırı geri okumak RLS'e takılırdı.
+        const orderId = crypto.randomUUID();
+        const { error } = await supabase.from("orders").insert({
+          id: orderId,
+          store_id: store.id,
+          table_id: table.id,
+          status: "pending",
+          subtotal,
+          discount,
+          tax,
+          total_amount: subtotal + tax,
+        });
         if (error) throw error;
 
         const { error: itemsErr } = await supabase.from("order_items").insert(
           cart.map((l) => ({
-            order_id: order.id,
+            order_id: orderId,
             product_id: l.product.id,
             product_name: l.product.name,
             quantity: l.qty,
@@ -148,7 +149,7 @@ export default function CustomerMenuPage({ params }: { params: Promise<{ storeSl
         );
         if (itemsErr) throw itemsErr;
 
-        setPlacedOrderId(order.id);
+        setPlacedOrderId(orderId);
         await supabase.from("tables").update({ status: "dolu", opened_at: table.opened_at ?? new Date().toISOString() }).eq("id", table.id);
       }
       setOrderSent(true);
