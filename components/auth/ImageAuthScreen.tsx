@@ -1,18 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
+import { MobileAuthForm } from "@/components/auth/MobileAuthForm";
 import { isSupabaseConfigured, createClient } from "@/lib/supabase/client";
 import { getErrorMessage } from "@/lib/utils";
 
 const fieldClass =
   "absolute bg-transparent pl-9 pr-3 text-sm text-slate-800 outline-none rounded-lg focus:ring-2 focus:ring-blue-400/50 placeholder:text-transparent";
 
-export function ImageAuthScreen() {
+export function ImageAuthScreen({ mode = "login" }: { mode?: "login" | "signup" }) {
   const router = useRouter();
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
@@ -21,16 +22,21 @@ export function ImageAuthScreen() {
   const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPw, setShowLoginPw] = useState(false);
   const [loading, setLoading] = useState<"signup" | "login" | "google" | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [confirmNotice, setConfirmNotice] = useState(false);
 
   // /auth/callback başarısız olduğunda sebebi query string ile buraya taşır.
   // useSearchParams yerine window kullanılıyor: bu sayfa statik üretiliyor,
   // useSearchParams ek bir Suspense sınırı gerektirirdi.
-  useEffect(() => {
+  const [manualError, setManualError] = useState<string | null>(null);
+  const [callbackError, setCallbackError] = useState<string | null>(null);
+  const [callbackChecked, setCallbackChecked] = useState(false);
+  if (typeof window !== "undefined" && !callbackChecked) {
+    setCallbackChecked(true);
     const reason = new URLSearchParams(window.location.search).get("auth_error");
-    if (reason) setError(reason);
-  }, []);
+    if (reason) setCallbackError(reason);
+  }
+  const error = manualError ?? callbackError;
+  const setError = setManualError;
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
@@ -131,7 +137,25 @@ export function ImageAuthScreen() {
         </Alert>
       )}
 
-      <div className="relative w-full" style={{ aspectRatio: "1536 / 1024" }}>
+      {/* Mobil: görsel üzerine yerleştirilen alanlar telefonda kullanılamaz olduğu için gerçek form. */}
+      <MobileAuthForm
+        mode={mode}
+        signupEmail={signupEmail}
+        setSignupEmail={setSignupEmail}
+        signupPassword={signupPassword}
+        setSignupPassword={setSignupPassword}
+        loginEmail={loginEmail}
+        setLoginEmail={setLoginEmail}
+        loginPassword={loginPassword}
+        setLoginPassword={setLoginPassword}
+        loading={loading}
+        onSignup={handleSignup}
+        onLogin={handleLogin}
+        onGoogle={handleGoogle}
+      />
+
+      {/* Masaüstü: orijinal tasarım görseli + üzerine hizalanmış gerçek form alanları */}
+      <div className="relative hidden w-full lg:block" style={{ aspectRatio: "1536 / 1024" }}>
         <Image src="/auth/signup-login.png" alt="AdisyonMatrix Kayıt ve Giriş" fill priority sizes="100vw" className="object-contain" />
 
         {/* Logo -> anasayfa */}

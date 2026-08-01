@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, Building2, Crown, Mail, Phone, Save, ShieldAlert } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
@@ -10,6 +11,7 @@ import { Input, Label, Textarea } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { Tabs } from "@/components/ui/Tabs";
 import { useStore } from "@/lib/store-context";
+import { PLANS } from "@/lib/plans";
 import { isSupabaseConfigured, createClient } from "@/lib/supabase/client";
 import { getErrorMessage } from "@/lib/utils";
 
@@ -26,6 +28,15 @@ export default function AyarlarPage() {
   const router = useRouter();
   const { store } = useStore();
   const [tab, setTab] = useState("genel");
+
+  // Kenar çubuğundaki "Planı Yükselt" ?tab=plan ile doğrudan plan sekmesini açar.
+  // Sunucu/istemci uyuşmazlığı olmaması için ilk istemci render'ında bir kez uygulanır.
+  const [tabFromUrlApplied, setTabFromUrlApplied] = useState(false);
+  if (typeof window !== "undefined" && !tabFromUrlApplied) {
+    setTabFromUrlApplied(true);
+    const requested = new URLSearchParams(window.location.search).get("tab");
+    if (requested && TABS.some((t) => t.key === requested)) setTab(requested);
+  }
   const [name, setName] = useState(store.name);
   const [phone, setPhone] = useState(store.phone ?? "");
   const [address, setAddress] = useState(store.address ?? "");
@@ -129,11 +140,19 @@ export default function AyarlarPage() {
           <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 p-5 text-white">
             <Crown className="h-8 w-8 text-amber-300" />
             <div>
-              <p className="font-semibold capitalize">{store.plan} Plan</p>
+              <p className="font-semibold">{PLANS.find((p) => p.key === store.plan)?.name ?? store.plan}</p>
               <p className="text-xs text-blue-100">{store.ai_credits.toLocaleString("tr-TR")} AI kredisi kaldı</p>
             </div>
           </div>
-          <p className="mt-4 text-sm text-slate-500">Plan yükseltme ve faturalama bu sürümde henüz aktif değildir.</p>
+          <div className="mt-5">
+            <p className="text-sm font-semibold text-slate-900">Paketleri karşılaştırın</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Tüm paketleri, kredi hakları ve fiyatlarıyla birlikte görün.
+            </p>
+            <Link href={`/${store.slug}/plan`} className="mt-4 inline-block">
+              <Button>Paketleri Gör</Button>
+            </Link>
+          </div>
         </Card>
       )}
 

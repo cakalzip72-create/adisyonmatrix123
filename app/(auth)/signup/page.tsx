@@ -1,5 +1,5 @@
 import { ImageAuthScreen } from "@/components/auth/ImageAuthScreen";
 
 export default function SignupPage() {
-  return <ImageAuthScreen />;
+  return <ImageAuthScreen mode="signup" />;
 }

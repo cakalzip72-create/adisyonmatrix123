@@ -1,9 +1,16 @@
 import { ImageSection } from "@/components/landing/ImageSection";
 import { LinkHotspot } from "@/components/landing/Hotspot";
+import { MobileLanding } from "@/components/landing/MobileLanding";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <>
+      {/* Mobil: tasarım görselleri telefonda okunamayacak kadar küçüldüğü için
+          aynı içeriğin gerçek HTML sürümü gösterilir. */}
+      <MobileLanding />
+
+      {/* Masaüstü: orijinal tasarım görselleri + tıklanabilir alanlar */}
+      <div className="hidden min-h-screen flex-col bg-white lg:flex">
       {/* 1. Hero + navbar */}
       <ImageSection id="top" src="/landing/section-1.jpg" alt="AdisyonMatrix — Restoran Yönetimi, Daha Akıllı, Daha Kolay" priority>
         <LinkHotspot href="/" top={2} left={3.5} width={17} height={7} aria-label="AdisyonMatrix anasayfa" />
@@ -46,6 +53,7 @@ export default function Home() {
         <LinkHotspot href="/" top={14.5} left={4} width={22} height={7} aria-label="AdisyonMatrix anasayfa" />
         <LinkHotspot href="/onboarding/plan" top={30.5} left={30.5} width={9} height={3.5} aria-label="Fiyatlandırma" />
       </ImageSection>
-    </div>
+      </div>
+    </>
   );
 }

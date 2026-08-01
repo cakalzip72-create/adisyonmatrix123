@@ -11,13 +11,14 @@ interface TabsProps {
 
 export function Tabs({ tabs, active, onChange, className }: TabsProps) {
   return (
-    <div className={cn("flex items-center gap-1 border-b border-slate-200", className)}>
+    // Mobilde sekmeler sığmadığında yatay kaydırılabilir olmalı.
+    <div className={cn("flex items-center gap-1 overflow-x-auto border-b border-slate-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", className)}>
       {tabs.map((tab) => (
         <button
           key={tab.key}
           onClick={() => onChange(tab.key)}
           className={cn(
-            "flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors -mb-px",
+            "flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors -mb-px",
             active === tab.key
               ? "border-blue-600 text-blue-600"
               : "border-transparent text-slate-500 hover:text-slate-700"

@@ -100,8 +100,8 @@ export function Sidebar({ mobileOpen, onClose }: { mobileOpen?: boolean; onClose
           <Crown className="h-5 w-5 text-amber-300" />
           <p className="mt-2 text-sm font-semibold">{store.plan === "professional" ? "Pro Plan" : "Planınızı Yükseltin"}</p>
           <p className="mt-1 text-xs text-blue-100">Planınızı yükselterek daha fazla özelliğe erişebilirsiniz.</p>
-          <Link href={`/${store.slug}/ayarlar`} className="mt-3 block rounded-lg bg-white/15 px-3 py-2 text-center text-xs font-semibold hover:bg-white/25">
-            Planı Yükselt
+          <Link href={`/${store.slug}/plan`} className="mt-3 block rounded-lg bg-white/15 px-3 py-2 text-center text-xs font-semibold hover:bg-white/25">
+            Paketleri Gör
           </Link>
         </div>
 
