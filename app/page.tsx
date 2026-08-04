@@ -1,13 +1,12 @@
 import { ImageSection } from "@/components/landing/ImageSection";
 import { LinkHotspot } from "@/components/landing/Hotspot";
-import { MobileLanding } from "@/components/landing/MobileLanding";
+import { MobileLandingImages } from "@/components/landing/MobileLandingImages";
 
 export default function Home() {
   return (
     <>
-      {/* Mobil: tasarım görselleri telefonda okunamayacak kadar küçüldüğü için
-          aynı içeriğin gerçek HTML sürümü gösterilir. */}
-      <MobileLanding />
+      {/* Mobil: 9:16 tasarım görselleri + tıklanabilir alanlar */}
+      <MobileLandingImages />
 
       {/* Masaüstü: orijinal tasarım görselleri + tıklanabilir alanlar */}
       <div className="hidden min-h-screen flex-col bg-white lg:flex">

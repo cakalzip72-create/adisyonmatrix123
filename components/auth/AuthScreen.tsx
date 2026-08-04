@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -22,8 +21,9 @@ import {
 } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { LogoMark } from "@/components/ui/Logo";
-import { isSupabaseConfigured, createClient } from "@/lib/supabase/client";
-import { getErrorMessage } from "@/lib/utils";
+import { MobileAuthImage } from "@/components/auth/MobileAuthImage";
+import { useAuthActions } from "@/components/auth/useAuthActions";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 /** Google'ın çok renkli "G" işareti — lucide'de bulunmadığı için satır içi SVG. */
 function GoogleMark({ className }: { className?: string }) {
@@ -69,109 +69,35 @@ const PASSWORD_RULES = [
 ];
 
 export function AuthScreen() {
-  const router = useRouter();
+  const { loading, error, confirmEmail, signup, login, google: handleGoogle } = useAuthActions();
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [showSignupPw, setShowSignupPw] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPw, setShowLoginPw] = useState(false);
-  const [loading, setLoading] = useState<"signup" | "login" | "google" | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [confirmNotice, setConfirmNotice] = useState(false);
+  const confirmNotice = confirmEmail !== null;
 
-  // /auth/callback başarısız olduğunda sebebi query string ile buraya taşır.
-  // useSearchParams yerine window kullanılıyor: bu sayfa statik üretiliyor,
-  // useSearchParams ek bir Suspense sınırı gerektirirdi.
-  useEffect(() => {
-    const reason = new URLSearchParams(window.location.search).get("auth_error");
-    if (reason) setError(reason);
-  }, []);
-
-  async function handleSignup(e: React.FormEvent) {
+  function handleSignup(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    setConfirmNotice(false);
-    setLoading("signup");
-    try {
-      if (isSupabaseConfigured) {
-        const supabase = createClient();
-        const { error: err, data } = await supabase.auth.signUp({
-          email: signupEmail,
-          password: signupPassword,
-          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-        });
-        if (err) throw err;
-        if (!data.session) {
-          // E-posta onayı zorunlu — oturum yok, onboarding'e geçilemez.
-          setConfirmNotice(true);
-          return;
-        }
-      }
-      router.push("/onboarding/store");
-    } catch (err) {
-      setError(getErrorMessage(err, "Kayıt sırasında bir hata oluştu."));
-    } finally {
-      setLoading(null);
-    }
+    void signup(signupEmail, signupPassword);
   }
 
-  async function handleLogin(e: React.FormEvent) {
+  function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    setLoading("login");
-    try {
-      if (isSupabaseConfigured) {
-        const supabase = createClient();
-        const { error: err, data } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword });
-        if (err) throw err;
-
-        const userId = data.user?.id;
-        const { data: owned } = await supabase.from("stores").select("slug").eq("owner_id", userId).maybeSingle();
-        if (owned) {
-          router.push(`/${owned.slug}/dashboard`);
-          return;
-        }
-        const { data: staffRow } = await supabase
-          .from("staff")
-          .select("stores(slug)")
-          .eq("user_id", userId)
-          .eq("status", "approved")
-          .maybeSingle();
-        const staffStore = staffRow?.stores as unknown as { slug: string } | null;
-        if (staffStore?.slug) {
-          router.push(`/${staffStore.slug}/dashboard`);
-          return;
-        }
-        router.push("/onboarding/store");
-      } else {
-        router.push("/lezzet-duragi/dashboard");
-      }
-    } catch (err) {
-      setError(getErrorMessage(err, "Giriş sırasında bir hata oluştu."));
-    } finally {
-      setLoading(null);
-    }
+    void login(loginEmail, loginPassword);
   }
 
-  async function handleGoogle() {
-    setError(null);
-    if (!isSupabaseConfigured) {
-      setError("Google ile giriş için Supabase yapılandırması ve Google OAuth sağlayıcısının etkinleştirilmesi gerekir.");
-      return;
-    }
-    setLoading("google");
-    try {
-      const supabase = createClient();
-      await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback` } });
-    } finally {
-      setLoading(null);
-    }
-  }
-
-  // Arka plan gradyanı ve ışık lekeleri app/(auth)/layout.tsx tarafından sağlanır.
   return (
-    <div className="mx-auto w-full max-w-6xl">
+    <>
+      {/* Mobil: tasarım görseli + görselin üstüne bindirilmiş gerçek alanlar */}
+      <MobileAuthImage />
+
+      {/* Masaüstü: responsive HTML sürüm */}
+      <div className="relative hidden min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-slate-50 to-cyan-50 px-4 py-10 lg:flex">
+        <div className="pointer-events-none absolute -top-32 -left-20 h-96 w-96 rounded-full bg-blue-200/40 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 -right-20 h-96 w-96 rounded-full bg-cyan-200/40 blur-3xl" />
+        <div className="relative mx-auto w-full max-w-6xl">
         {/* Logo + slogan */}
         <div className="flex flex-col items-center text-center">
           <LogoMark size={64} />
@@ -437,9 +363,11 @@ export function AuthScreen() {
           </div>
         </div>
 
-      <p className="mt-8 text-center text-xs text-slate-400">
-        © {new Date().getFullYear()} AdisyonMatrix. Tüm hakları saklıdır.
-      </p>
-    </div>
+          <p className="mt-8 text-center text-xs text-slate-400">
+            © {new Date().getFullYear()} AdisyonMatrix. Tüm hakları saklıdır.
+          </p>
+        </div>
+      </div>
+    </>
   );
 }
