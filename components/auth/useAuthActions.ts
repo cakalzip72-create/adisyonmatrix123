@@ -99,10 +99,16 @@ export function useAuthActions() {
     setLoading("google");
     try {
       const supabase = createClient();
-      await supabase.auth.signInWithOAuth({
+      const { error: err } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
+      // signInWithOAuth başarılıysa zaten sayfayı Google'a yönlendirir ve
+      // buraya hiç dönülmez. Buraya dönülüyorsa (özellikle mobil Safari'de,
+      // ITP/özel gezinme depolamayı engellediğinde) hata sessizce yutuluyordu.
+      if (err) throw err;
+    } catch (err) {
+      setError(getErrorMessage(err, "Google ile giriş başlatılamadı."));
     } finally {
       setLoading(null);
     }
